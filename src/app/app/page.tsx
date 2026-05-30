@@ -5,6 +5,7 @@ import { GeneratedDoc } from "@/lib/types";
 import { useGenerate } from "@/hooks/useGenerate";
 import { useHistory } from "@/hooks/useHistory";
 import { useToast } from "@/hooks/useToast";
+import { useUsage } from "@/hooks/useUsage";
 import { Header } from "@/components/Header";
 import { InputPanel } from "@/components/InputPanel";
 import { OutputPanel } from "@/components/OutputPanel";
@@ -13,12 +14,11 @@ import { StatusBar } from "@/components/StatusBar";
 import { ToastContainer } from "@/components/ToastContainer";
 import { TemplateSelector } from "@/components/TemplateSelector";
 import { CommandPalette } from "@/components/CommandPalette";
+import { UpgradePopup } from "@/components/UpgradePopup";
 import { Template } from "@/lib/templates";
 import { generatePDF } from "@/lib/pdf-generator";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { useUsage } from "@/hooks/useUsage";
-import { UpgradePopup } from "@/components/UpgradePopup";
 
 export default function AppPage() {
   const router = useRouter();
@@ -31,13 +31,14 @@ export default function AppPage() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [userAvatar, setUserAvatar] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [userAvatar, setUserAvatar] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
   const [elapsed, setElapsed] = useState(0);
   const startTimeRef = useRef<number>(0);
+  const [templatePrompt, setTemplatePrompt] = useState<string | null>(null);
 
-  // Auth check — non-blocking, runs in background
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
@@ -46,7 +47,6 @@ export default function AppPage() {
         setUserAvatar(data.session.user.user_metadata?.avatar_url || "");
       }
     });
-    // Also verify with server (slower, but catches expired sessions)
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserEmail(data.user.email || "");
@@ -84,6 +84,7 @@ export default function AppPage() {
     }
     setSelectedId(null);
     setElapsed(0);
+    setSidebarOpen(false); // close sidebar on mobile after generate
     const doc = await generate(prompt);
     if (doc) {
       addEntry(doc);
@@ -95,6 +96,7 @@ export default function AppPage() {
   const handleSelect = (doc: GeneratedDoc) => {
     reset();
     setSelectedId(doc.id);
+    setSidebarOpen(false);
   };
 
   const handleNew = () => {
@@ -102,8 +104,6 @@ export default function AppPage() {
     setSelectedId(null);
     setElapsed(0);
   };
-
-  const [templatePrompt, setTemplatePrompt] = useState<string | null>(null);
 
   const handleTemplateSelect = (template: Template) => {
     setShowTemplates(false);
@@ -117,10 +117,7 @@ export default function AppPage() {
     addToast("success", "PDF berhasil di-download");
   };
 
-  const selectedDoc = selectedId
-    ? history.find((d) => d.id === selectedId)
-    : null;
-
+  const selectedDoc = selectedId ? history.find((d) => d.id === selectedId) : null;
   const displayDocs = selectedDoc
     ? {
         executiveSummary: "",
@@ -136,9 +133,7 @@ export default function AppPage() {
 
   const hasResult = Object.values(displayDocs).some((v) => v.length > 0) || isGenerating;
   const allContent = Object.values(displayDocs).join(" ");
-  const wordCount = allContent.trim()
-    ? allContent.trim().split(/\s+/).length
-    : 0;
+  const wordCount = allContent.trim() ? allContent.trim().split(/\s+/).length : 0;
   const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
   const commands = [
@@ -155,21 +150,44 @@ export default function AppPage() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <Header hasResult={hasResult} onNew={handleNew} onDownloadPDF={handleDownloadPDF} isGenerating={isGenerating} userEmail={userEmail} userAvatar={userAvatar} />
+      <Header
+        hasResult={hasResult}
+        onNew={handleNew}
+        onDownloadPDF={handleDownloadPDF}
+        isGenerating={isGenerating}
+        userEmail={userEmail}
+        userAvatar={userAvatar}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+      />
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 relative">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
         {!focusMode && (
           <aside
-            className="shrink-0 border-r border-border flex flex-col bg-panel transition-[width] duration-300 overflow-hidden"
-            style={{ width: hasResult ? 260 : 300 }}
+            className={`
+              fixed md:relative z-40 md:z-auto
+              top-10 bottom-0 left-0
+              md:top-auto md:bottom-auto md:left-auto
+              w-[280px] md:shrink-0
+              border-r border-border flex flex-col bg-panel
+              transition-transform duration-200 md:transition-[width]
+              ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+            `}
+            style={{ width: typeof window !== "undefined" && window.innerWidth >= 768 ? (hasResult ? 260 : 300) : 280 }}
           >
             <div className="p-4 border-b border-border-dim">
               {/* Usage indicator */}
               <div className="mb-3 px-2 py-1.5 rounded bg-inset border border-border-dim">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-mono text-ink-ghost">
-                    {usage.planLabel}
-                  </span>
+                  <span className="text-[10px] font-mono text-ink-ghost">{usage.planLabel}</span>
                   <div className="flex items-center gap-2">
                     <div className="w-16 h-1 rounded-full bg-border overflow-hidden">
                       <div
@@ -177,16 +195,11 @@ export default function AppPage() {
                         style={{ width: `${(usage.used / usage.limit) * 100}%` }}
                       />
                     </div>
-                    <span className="text-[10px] font-mono text-ink-dim">
-                      {usage.used}/{usage.limit}
-                    </span>
+                    <span className="text-[10px] font-mono text-ink-dim">{usage.used}/{usage.limit}</span>
                   </div>
                 </div>
                 {usage.plan === "free" && (
-                  <a
-                    href="/pricing"
-                    className="block text-[10px] font-mono text-aqua hover:underline"
-                  >
+                  <a href="/pricing" className="block text-[10px] font-mono text-aqua hover:underline">
                     Upgrade ke Premium →
                   </a>
                 )}
@@ -215,9 +228,7 @@ export default function AppPage() {
 
             {error && (
               <div className="mx-3 mt-2 p-2.5 rounded bg-err/6 border border-err/15">
-                <p className="text-[11px] text-err font-mono leading-relaxed break-all">
-                  {error}
-                </p>
+                <p className="text-[11px] text-err font-mono leading-relaxed break-all">{error}</p>
               </div>
             )}
 
@@ -232,6 +243,7 @@ export default function AppPage() {
           </aside>
         )}
 
+        {/* Main content */}
         <main className="flex-1 flex flex-col min-w-0 bg-bg">
           {focusMode && (
             <div className="flex items-center h-8 px-4 border-b border-border-dim bg-panel">
@@ -262,22 +274,8 @@ export default function AppPage() {
       </div>
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />
-
-      {showTemplates && (
-        <TemplateSelector
-          onSelect={handleTemplateSelect}
-          onClose={() => setShowTemplates(false)}
-        />
-      )}
-
-      {showCommandPalette && (
-        <CommandPalette
-          commands={commands}
-          onClose={() => setShowCommandPalette(false)}
-        />
-      )}
-
-      {/* Upgrade popup */}
+      {showTemplates && <TemplateSelector onSelect={handleTemplateSelect} onClose={() => setShowTemplates(false)} />}
+      {showCommandPalette && <CommandPalette commands={commands} onClose={() => setShowCommandPalette(false)} />}
       <UpgradePopup plan={usage.plan} />
     </div>
   );

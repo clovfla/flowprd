@@ -11,6 +11,7 @@ interface HeaderProps {
   isGenerating?: boolean;
   userEmail?: string;
   userAvatar?: string;
+  onToggleSidebar?: () => void;
 }
 
 export function Header({
@@ -20,6 +21,7 @@ export function Header({
   isGenerating,
   userEmail,
   userAvatar,
+  onToggleSidebar,
 }: HeaderProps) {
   const router = useRouter();
   const [imgError, setImgError] = useState(false);
@@ -35,6 +37,17 @@ export function Header({
   return (
     <header className="flex items-center justify-between px-4 h-10 border-b border-border bg-panel shrink-0">
       <div className="flex items-center gap-2">
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="md:hidden p-1 text-ink-ghost hover:text-ink cursor-pointer"
+            title="Menu"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+        )}
         <a href="/" className="flex items-center gap-2">
           <div className="flex gap-[3px]">
             <div className="w-[3px] h-3 rounded-[1px] bg-orange" />
