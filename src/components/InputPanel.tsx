@@ -65,29 +65,27 @@ export function InputPanel({ onGenerate, isGenerating, templatePrompt, plan = "f
   const handleSubmit = async () => {
     if (!prompt.trim() || isGenerating) return;
 
-    // Clarification questions — premium only
-    if (plan !== "free") {
-      setIsAnalyzing(true);
-      try {
-        const res = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: prompt.trim() }),
-        });
+    // Clarification questions
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: prompt.trim() }),
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.sufficient === false && data.questions?.length > 0) {
-            setQuestions(data.questions);
-            setIsAnalyzing(false);
-            return;
-          }
+      if (res.ok) {
+        const data = await res.json();
+        if (data.sufficient === false && data.questions?.length > 0) {
+          setQuestions(data.questions);
+          setIsAnalyzing(false);
+          return;
         }
-      } catch {
-        // fallback: langsung generate
       }
-      setIsAnalyzing(false);
+    } catch {
+      // fallback: langsung generate
     }
+    setIsAnalyzing(false);
 
     startGenerate(prompt.trim());
   };
