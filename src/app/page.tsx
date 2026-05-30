@@ -129,8 +129,8 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-ink-mid text-[15px] leading-relaxed max-w-md mx-auto mb-8">
-            Deskripsikan project kamu, AI akan generate PRD lengkap dengan
-            workflow development. Gratis, tanpa batasan.
+            Deskripsikan project kamu, AI akan generate 8 dokumen lengkap —
+            PRD, workflow, architecture, dan lainnya dalam hitungan detik.
           </p>
 
           <div className="flex items-center justify-center gap-3">
@@ -268,7 +268,7 @@ export default function LandingPage() {
           Siap bikin PRD?
         </h2>
         <p className="text-[13px] text-ink-dim mb-6">
-          Gratis, tanpa registrasi, langsung pakai.
+          3 generate gratis per bulan. Upgrade kapan saja.
         </p>
         <Link
           href={isLoggedIn ? "/app" : "/login"}
