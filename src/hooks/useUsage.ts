@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isAdmin } from "@/lib/admin";
 
 const PLAN_LIMITS: Record<string, number> = {
-  free: 3,
+  free: 10,
   premium: 10,
   premium_plus: 25,
 };
