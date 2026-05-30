@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isAdmin } from "@/lib/admin";
 
 const PLAN_LIMITS: Record<string, number> = {
   free: 3,
@@ -53,7 +54,12 @@ export function useUsage(): UsageInfo {
       sub = { plan: "free" };
     }
 
-    setPlan(sub.plan);
+    // Admin bypass — always premium_plus
+    if (isAdmin(userData.user.email || "")) {
+      setPlan("premium_plus");
+    } else {
+      setPlan(sub.plan);
+    }
 
     // Get or create usage for current month
     const month = new Date().toISOString().slice(0, 7); // "2026-05"

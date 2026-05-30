@@ -262,6 +262,8 @@ export default function AppPage() {
             isGenerating={isGenerating}
             progress={progress}
             contentRef={contentRef}
+            plan={usage.plan}
+            userEmail={userEmail}
             onToast={addToast}
           />
           <StatusBar

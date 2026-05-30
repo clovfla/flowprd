@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { exportMarkdown, exportPlainText, exportHTML, exportDOCX, exportNotion, exportPresentation } from "@/lib/exporters";
+import { canUseFeature } from "@/lib/admin";
 
 interface ActionBarProps {
   content: string;
   label: string;
   allDocs?: Record<string, string>;
+  plan?: string;
+  userEmail?: string;
   onToast?: (type: "success" | "error" | "info", msg: string) => void;
 }
 
-export function ActionBar({ content, label, allDocs, onToast }: ActionBarProps) {
+export function ActionBar({ content, label, allDocs, plan = "free", userEmail = "", onToast }: ActionBarProps) {
   const [copied, setCopied] = useState(false);
   const [showExport, setShowExport] = useState(false);
 
@@ -23,6 +26,19 @@ export function ActionBar({ content, label, allDocs, onToast }: ActionBarProps) 
 
   const handleExport = (format: string) => {
     const slug = label.toLowerCase().replace(/\s+/g, "-");
+
+    // Premium-only formats
+    if (["docx", "notion"].includes(format) && !canUseFeature(plan, "export_docx", userEmail)) {
+      onToast?.("error", "Export DOCX/Notion butuh Premium. Upgrade di /pricing");
+      setShowExport(false);
+      return;
+    }
+    if (format === "slides" && !canUseFeature(plan, "presentation", userEmail)) {
+      onToast?.("error", "Presentation export butuh Premium+. Upgrade di /pricing");
+      setShowExport(false);
+      return;
+    }
+
     switch (format) {
       case "md":
         exportMarkdown(content, slug);
@@ -115,6 +131,10 @@ export function ActionBar({ content, label, allDocs, onToast }: ActionBarProps) 
       {/* Share button */}
       <button
         onClick={async () => {
+          if (!canUseFeature(plan, "share_link", userEmail)) {
+            onToast?.("error", "Share link butuh Premium. Upgrade di /pricing");
+            return;
+          }
           try {
             const res = await fetch("/api/share", {
               method: "POST",

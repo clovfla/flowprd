@@ -226,8 +226,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               { name: "Free", price: "Rp 0", limit: "3x/bulan", highlight: false, features: ["3 generate per bulan", "8 dokumen per generate", "Export PDF"] },
-              { name: "Premium", price: "Rp 79.000", limit: "10x/bulan", highlight: true, features: ["10 generate per bulan", "Priority model access", "Clarification questions"] },
-              { name: "Premium+", price: "Rp 189.000", limit: "25x/bulan", highlight: false, features: ["25 generate per bulan", "Team workspace (soon)", "API access (soon)"] },
+              { name: "Premium", price: "Rp 79.000", limit: "10x/bulan", highlight: true, features: ["10 generate per bulan", "Cloud save + Share link", "Clarification questions"] },
+              { name: "Premium+", price: "Rp 189.000", limit: "25x/bulan", highlight: false, features: ["25 generate per bulan", "Auto-improve + Presentation", "Custom branding PDF"] },
             ].map((plan) => (
               <div
                 key={plan.name}

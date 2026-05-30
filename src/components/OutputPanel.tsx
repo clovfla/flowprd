@@ -14,6 +14,8 @@ interface OutputPanelProps {
   isGenerating: boolean;
   progress: ProgressInfo | null;
   contentRef: React.RefObject<HTMLDivElement | null>;
+  plan?: string;
+  userEmail?: string;
   onToast?: (type: "success" | "error" | "info", msg: string) => void;
 }
 
@@ -30,6 +32,8 @@ export function OutputPanel({
   isGenerating,
   progress,
   contentRef,
+  plan,
+  userEmail,
   onToast,
 }: OutputPanelProps) {
   const [category, setCategory] = useState<DocCategory>("planning");
@@ -168,7 +172,7 @@ export function OutputPanel({
 
       {/* Actions */}
       {tabContent && !isGenerating && (
-        <ActionBar content={tabContent} label={activeTab} allDocs={docs} onToast={onToast} />
+        <ActionBar content={tabContent} label={activeTab} allDocs={docs} plan={plan} userEmail={userEmail} onToast={onToast} />
       )}
     </div>
   );
