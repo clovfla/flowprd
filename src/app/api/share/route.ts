@@ -3,9 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 export async function POST(req: NextRequest) {
-  const { docId, title, prdContent, workflowContent } = await req.json();
+  const { docId, title, docs } = await req.json();
 
-  if (!docId || !prdContent) {
+  if (!docId || !docs) {
     return Response.json({ error: "Missing data" }, { status: 400 });
   }
 
@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
     doc_id: docId,
     token,
     title: title || "Untitled",
-    prd_content: prdContent,
-    workflow_content: workflowContent || "",
+    prd_content: JSON.stringify(docs),
+    workflow_content: "",
   });
 
   if (error) {

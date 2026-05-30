@@ -6,10 +6,11 @@ import { exportMarkdown, exportPlainText, exportHTML, exportDOCX, exportNotion, 
 interface ActionBarProps {
   content: string;
   label: string;
+  allDocs?: Record<string, string>;
   onToast?: (type: "success" | "error" | "info", msg: string) => void;
 }
 
-export function ActionBar({ content, label, onToast }: ActionBarProps) {
+export function ActionBar({ content, label, allDocs, onToast }: ActionBarProps) {
   const [copied, setCopied] = useState(false);
   const [showExport, setShowExport] = useState(false);
 
@@ -121,8 +122,7 @@ export function ActionBar({ content, label, onToast }: ActionBarProps) {
               body: JSON.stringify({
                 docId: label,
                 title: label,
-                prdContent: content,
-                workflowContent: "",
+                docs: allDocs || { prd: content },
               }),
             });
             const data = await res.json();

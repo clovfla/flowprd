@@ -168,7 +168,7 @@ export function OutputPanel({
 
       {/* Actions */}
       {tabContent && !isGenerating && (
-        <ActionBar content={tabContent} label={activeTab} onToast={onToast} />
+        <ActionBar content={tabContent} label={activeTab} allDocs={docs} onToast={onToast} />
       )}
     </div>
   );
