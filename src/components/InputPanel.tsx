@@ -8,6 +8,7 @@ interface InputPanelProps {
   onGenerate: (prompt: string) => void;
   isGenerating: boolean;
   templatePrompt?: string | null;
+  plan?: string;
 }
 
 const EXAMPLES = [
@@ -17,7 +18,7 @@ const EXAMPLES = [
   "Social media komunitas kopi",
 ];
 
-export function InputPanel({ onGenerate, isGenerating, templatePrompt }: InputPanelProps) {
+export function InputPanel({ onGenerate, isGenerating, templatePrompt, plan = "free" }: InputPanelProps) {
   const [prompt, setPrompt] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [questions, setQuestions] = useState<string[] | null>(null);
@@ -64,27 +65,30 @@ export function InputPanel({ onGenerate, isGenerating, templatePrompt }: InputPa
   const handleSubmit = async () => {
     if (!prompt.trim() || isGenerating) return;
 
-    setIsAnalyzing(true);
-    try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim() }),
-      });
+    // Clarification questions — premium only
+    if (plan !== "free") {
+      setIsAnalyzing(true);
+      try {
+        const res = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: prompt.trim() }),
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.sufficient === false && data.questions?.length > 0) {
-          setQuestions(data.questions);
-          setIsAnalyzing(false);
-          return;
+        if (res.ok) {
+          const data = await res.json();
+          if (data.sufficient === false && data.questions?.length > 0) {
+            setQuestions(data.questions);
+            setIsAnalyzing(false);
+            return;
+          }
         }
+      } catch {
+        // fallback: langsung generate
       }
-    } catch {
-      // fallback: langsung generate
+      setIsAnalyzing(false);
     }
 
-    setIsAnalyzing(false);
     startGenerate(prompt.trim());
   };
 

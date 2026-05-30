@@ -209,6 +209,7 @@ export default function AppPage() {
                 onGenerate={handleGenerate}
                 isGenerating={isGenerating}
                 templatePrompt={templatePrompt}
+                plan={usage.plan}
               />
             </div>
 
