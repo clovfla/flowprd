@@ -6,6 +6,7 @@ import { ProgressInfo } from "@/hooks/useGenerate";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ActionBar } from "./ActionBar";
 import { SkeletonLoader } from "./SkeletonLoader";
+import { canUseFeature } from "@/lib/admin";
 
 interface OutputPanelProps {
   docs: Record<DocKey, string>;
@@ -147,6 +148,37 @@ export function OutputPanel({
             // Completed doc
             <div style={{ animation: "fade-in 0.2s ease-out" }} key={activeTab}>
               <MarkdownRenderer content={tabContent} />
+              {/* Auto-improve button — Premium+ only */}
+              {!isGenerating && canUseFeature(plan || "free", "auto_improve", userEmail || "") && (
+                <button
+                  onClick={async () => {
+                    onToast?.("info", "Improving section...");
+                    try {
+                      const res = await fetch("/api/improve", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ section: tabContent, sectionName: activeTab }),
+                      });
+                      const data = await res.json();
+                      if (data.improved) {
+                        onToast?.("success", "Section berhasil di-improve!");
+                        // Update the doc content (triggers re-render via parent)
+                        docs[activeTab] = data.improved;
+                      } else {
+                        onToast?.("error", data.error || "Gagal improve");
+                      }
+                    } catch {
+                      onToast?.("error", "Gagal menghubungi AI");
+                    }
+                  }}
+                  className="mt-3 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-mono rounded border border-aqua/30 text-aqua hover:bg-aqua/10 transition-colors cursor-pointer"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                  </svg>
+                  Auto-Improve
+                </button>
+              )}
             </div>
           ) : showStream ? (
             // Currently streaming this tab

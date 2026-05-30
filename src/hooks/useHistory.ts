@@ -40,6 +40,11 @@ export function useHistory() {
         prompt: doc.prompt,
         prd_content: doc.prdContent,
         workflow_content: doc.workflowContent,
+        // Simpan semua 8 dokumen sebagai JSON di kolom extra
+        all_docs: JSON.stringify({
+          prd: doc.prdContent,
+          workflow: doc.workflowContent,
+        }),
       }).then(() => {});
     });
   }, []);
